@@ -121,7 +121,7 @@ class StatusBarController {
         
         let response = alert.runModal()
         if response == .alertSecondButtonReturn {
-            NSWorkspace.shared.open(URL(string: "https://github.com/whitenobel/MagicTouch")!)
+            NSWorkspace.shared.open(URL(string: "https://github.com/D3FVLT/MagicTouch")!)
         } else if response == .alertThirdButtonReturn {
             NSWorkspace.shared.open(URL(string: "https://www.donationalerts.com/r/whitenobel")!)
         }
