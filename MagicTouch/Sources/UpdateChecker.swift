@@ -4,7 +4,7 @@ import Cocoa
 class UpdateChecker {
     static let shared = UpdateChecker()
     
-    private let githubRepo = "whitenobel/MagicTouch"
+    private let githubRepo = "D3FVLT/MagicTouch"
     private let releasesURL: URL
     
     private init() {
