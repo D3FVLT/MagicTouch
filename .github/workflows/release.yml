@@ -1,0 +1,70 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-14
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      
+      - name: Generate Xcode Project
+        run: xcodegen generate
+      
+      - name: Build Universal Binary
+        run: |
+          xcodebuild -project MagicTouch.xcodeproj \
+            -scheme MagicTouch \
+            -configuration Release \
+            -destination "generic/platform=macOS" \
+            ARCHS="arm64 x86_64" \
+            ONLY_ACTIVE_ARCH=NO \
+            CODE_SIGN_IDENTITY="-" \
+            CODE_SIGNING_REQUIRED=NO \
+            build
+      
+      - name: Create App Bundle
+        run: |
+          mkdir -p dist
+          cp -R ~/Library/Developer/Xcode/DerivedData/MagicTouch-*/Build/Products/Release/MagicTouch.app dist/
+      
+      - name: Verify Universal Binary
+        run: |
+          echo "Checking architectures:"
+          lipo -info dist/MagicTouch.app/Contents/MacOS/MagicTouch
+      
+      - name: Create DMG
+        run: |
+          mkdir -p dmg_contents
+          cp -R dist/MagicTouch.app dmg_contents/
+          ln -s /Applications dmg_contents/Applications
+          
+          hdiutil create -volname "MagicTouch" \
+            -srcfolder dmg_contents \
+            -ov -format UDZO \
+            "MagicTouch-${{ github.ref_name }}.dmg"
+      
+      - name: Upload DMG Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: MagicTouch-DMG
+          path: "*.dmg"
+      
+      - name: Create Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v1
+        with:
+          files: "*.dmg"
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+

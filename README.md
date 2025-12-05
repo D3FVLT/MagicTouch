@@ -23,6 +23,14 @@ Tap-to-click for Apple Magic Mouse. Free and open-source.
 
 ## Installation
 
+### Download Release (Recommended)
+
+1. Download the latest DMG from [Releases](https://github.com/D3FVLT/MagicTouch/releases)
+2. Open the DMG and drag MagicTouch to Applications
+3. Launch MagicTouch and grant Accessibility permissions
+
+The release is a Universal binary that works on both Apple Silicon and Intel Macs.
+
 ### Build from Source
 
 ```bash
@@ -34,14 +42,6 @@ open MagicTouch.xcodeproj
 ```
 
 Press `Cmd + R` to build and run.
-
-### Install to Applications
-
-For stable Accessibility permissions, copy to Applications:
-
-```bash
-cp -R ~/Library/Developer/Xcode/DerivedData/MagicTouch-*/Build/Products/Debug/MagicTouch.app /Applications/
-```
 
 ## Usage
 
