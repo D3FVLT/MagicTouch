@@ -51,14 +51,24 @@ jobs:
       
       - name: Create DMG
         run: |
+          VERSION="${{ github.ref_name }}"
+          VERSION="${VERSION#v}"  # Remove 'v' prefix if present
+          if [ -z "$VERSION" ] || [ "$VERSION" = "main" ]; then
+            VERSION="0.0.${{ github.run_number }}"
+          fi
+          
           mkdir -p dmg_contents
           cp -R dist/MagicTouch.app dmg_contents/
           ln -s /Applications dmg_contents/Applications
           
+          DMG_NAME="MagicTouch-${VERSION}-universal.dmg"
           hdiutil create -volname "MagicTouch" \
             -srcfolder dmg_contents \
             -ov -format UDZO \
-            "MagicTouch-${{ github.ref_name }}.dmg"
+            "$DMG_NAME"
+          
+          echo "DMG_NAME=$DMG_NAME" >> $GITHUB_ENV
+          echo "Created: $DMG_NAME"
       
       - name: Upload DMG Artifact
         uses: actions/upload-artifact@v4
@@ -70,7 +80,26 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v1
         with:
-          files: "*.dmg"
+          files: ${{ env.DMG_NAME }}
           generate_release_notes: true
+          body: |
+            ## Download
+            - **${{ env.DMG_NAME }}** — Universal binary (Apple Silicon + Intel)
+            
+            ## Installation
+            1. Download the DMG
+            2. Open it and drag MagicTouch to Applications
+            3. Launch and grant Accessibility permissions
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Create Draft Release (manual run)
+        if: github.event_name == 'workflow_dispatch'
+        uses: softprops/action-gh-release@v1
+        with:
+          files: ${{ env.DMG_NAME }}
+          tag_name: "v0.0.${{ github.run_number }}"
+          name: "MagicTouch v0.0.${{ github.run_number }}"
+          draft: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
