@@ -79,6 +79,10 @@ class StatusBarController {
         
         menu.addItem(NSMenuItem.separator())
         
+        let checkUpdatesItem = NSMenuItem(title: "Check for Updates...", action: #selector(checkForUpdates(_:)), keyEquivalent: "")
+        checkUpdatesItem.target = self
+        menu.addItem(checkUpdatesItem)
+        
         let aboutItem = NSMenuItem(title: "About MagicTouch", action: #selector(showAbout(_:)), keyEquivalent: "")
         aboutItem.target = self
         menu.addItem(aboutItem)
@@ -99,13 +103,28 @@ class StatusBarController {
         onSettingsClicked?()
     }
     
+    @objc private func checkForUpdates(_ sender: NSMenuItem) {
+        UpdateChecker.shared.checkForUpdates(silent: false)
+    }
+    
     @objc private func showAbout(_ sender: NSMenuItem) {
+        let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0"
+        let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "1"
+        
         let alert = NSAlert()
         alert.messageText = "MagicTouch"
-        alert.informativeText = "Version 1.0.0\n\nTap-to-click for Magic Mouse.\n\n© 2024 MIT License"
+        alert.informativeText = "Version \(version) (\(build))\n\nTap-to-click for Magic Mouse.\n\n© 2024 MIT License"
         alert.alertStyle = .informational
         alert.addButton(withTitle: "OK")
-        alert.runModal()
+        alert.addButton(withTitle: "GitHub")
+        alert.addButton(withTitle: "Donate ❤️")
+        
+        let response = alert.runModal()
+        if response == .alertSecondButtonReturn {
+            NSWorkspace.shared.open(URL(string: "https://github.com/whitenobel/MagicTouch")!)
+        } else if response == .alertThirdButtonReturn {
+            NSWorkspace.shared.open(URL(string: "https://www.donationalerts.com/r/whitenobel")!)
+        }
     }
     
     @objc private func quitApp(_ sender: NSMenuItem) {
@@ -132,8 +151,8 @@ class StatusBarController {
         guard let button = statusItem.button else { return }
         let iconName = settings.isEnabled ? "hand.tap.fill" : "hand.tap"
         if let image = NSImage(systemSymbolName: iconName, accessibilityDescription: "MagicTouch") {
-            image.isTemplate = true
-            button.image = image
+                    image.isTemplate = true
+                    button.image = image
+                }
+            }
         }
-    }
-}

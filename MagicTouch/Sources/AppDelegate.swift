@@ -53,6 +53,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
         
         NSApp.setActivationPolicy(.accessory)
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+            UpdateChecker.shared.checkForUpdates(silent: true)
+        }
     }
     
     func applicationWillTerminate(_ notification: Notification) {
@@ -62,15 +66,15 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private func checkAccessibilityPermissions() {
         guard !AXIsProcessTrusted() else { return }
         
-        let alert = NSAlert()
-        alert.messageText = "Accessibility Permission Required"
+            let alert = NSAlert()
+            alert.messageText = "Accessibility Permission Required"
         alert.informativeText = "MagicTouch needs accessibility permissions to generate click events. Please enable it in System Settings → Privacy & Security → Accessibility."
-        alert.alertStyle = .warning
+            alert.alertStyle = .warning
         alert.addButton(withTitle: "Open System Settings")
-        alert.addButton(withTitle: "Later")
-        
-        if alert.runModal() == .alertFirstButtonReturn {
-            NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")!)
+            alert.addButton(withTitle: "Later")
+            
+            if alert.runModal() == .alertFirstButtonReturn {
+                NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")!)
         }
     }
     

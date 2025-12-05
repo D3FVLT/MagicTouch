@@ -16,10 +16,12 @@ struct SettingsView: View {
                 advancedSection
                 Divider()
                 actionsSection
+                Divider()
+                supportSection
             }
             .padding(24)
         }
-        .frame(minWidth: 480, minHeight: 550)
+        .frame(minWidth: 480, minHeight: 600)
         .background(Color(NSColor.windowBackgroundColor))
     }
     
@@ -67,37 +69,34 @@ struct SettingsView: View {
     }
     
     private var touchZoneVisualizer: some View {
-        ZStack {
-            HStack(spacing: 0) {
-                Color.blue.opacity(0.25)
-                Color.orange.opacity(0.25)
-            }
-            
-            GeometryReader { geometry in
-                Rectangle()
-                    .fill(Color.secondary.opacity(0.3))
-                    .frame(width: 2)
-                    .position(x: geometry.size.width * CGFloat(settings.leftZoneThreshold), y: geometry.size.height / 2)
-            }
-            
-            HStack {
-                VStack(spacing: 4) {
-                    Text("Left")
-                        .font(.system(size: 13, weight: .semibold))
-                    Text(settings.leftTapAction.description)
-                        .font(.system(size: 11))
-                        .foregroundColor(.secondary)
-                }
-                .frame(maxWidth: .infinity)
+        GeometryReader { geometry in
+            ZStack(alignment: .leading) {
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(Color.orange.opacity(0.25))
                 
-                VStack(spacing: 4) {
-                    Text("Right")
-                        .font(.system(size: 13, weight: .semibold))
-                    Text(settings.rightTapAction.description)
-                        .font(.system(size: 11))
-                        .foregroundColor(.secondary)
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(Color.blue.opacity(0.25))
+                    .frame(width: geometry.size.width * CGFloat(settings.leftZoneThreshold))
+                
+                HStack {
+                    VStack(spacing: 4) {
+                        Text("Left")
+                            .font(.system(size: 13, weight: .semibold))
+                        Text(settings.leftTapAction.description)
+                            .font(.system(size: 11))
+                            .foregroundColor(.secondary)
+                    }
+                    .frame(width: geometry.size.width * CGFloat(settings.leftZoneThreshold))
+                    
+                    VStack(spacing: 4) {
+                        Text("Right")
+                            .font(.system(size: 13, weight: .semibold))
+                        Text(settings.rightTapAction.description)
+                            .font(.system(size: 11))
+                            .foregroundColor(.secondary)
+                    }
+                    .frame(maxWidth: .infinity)
                 }
-                .frame(maxWidth: .infinity)
             }
         }
         .frame(height: 80)
@@ -106,7 +105,6 @@ struct SettingsView: View {
             RoundedRectangle(cornerRadius: 16)
                 .stroke(Color.secondary.opacity(0.3), lineWidth: 1)
         )
-        .drawingGroup()
     }
     
     private func actionPicker(title: String, icon: String, color: Color, action: Binding<TapAction>) -> some View {
@@ -232,6 +230,27 @@ struct SettingsView: View {
             Button(action: checkAccessibility) {
                 Label("Check Accessibility", systemImage: "lock.shield")
             }
+        }
+    }
+    
+    private var supportSection: some View {
+        HStack {
+            Spacer()
+            Button(action: {
+                if let url = URL(string: "https://www.donationalerts.com/r/whitenobel") {
+                    NSWorkspace.shared.open(url)
+                }
+            }) {
+                HStack(spacing: 6) {
+                    Image(systemName: "heart.fill")
+                        .foregroundColor(.pink)
+                    Text("Support the Developer")
+                        .foregroundColor(.secondary)
+                }
+                .font(.caption)
+            }
+            .buttonStyle(.plain)
+            Spacer()
         }
     }
     

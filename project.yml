@@ -23,12 +23,14 @@ targets:
         type: group
       - path: MagicTouch/Resources
         type: group
+      - path: MagicTouch/Assets.xcassets
     settings:
       base:
         INFOPLIST_FILE: MagicTouch/Resources/Info.plist
         PRODUCT_BUNDLE_IDENTIFIER: com.opensource.MagicTouch
         PRODUCT_NAME: MagicTouch
         SWIFT_OBJC_BRIDGING_HEADER: MagicTouch/Sources/MagicTouch-Bridging-Header.h
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         LD_RUNPATH_SEARCH_PATHS:
           - "@executable_path/../Frameworks"
           - "/System/Library/PrivateFrameworks"

@@ -33,18 +33,18 @@ private func mtContactCallback(device: MTDeviceRef?, touches: UnsafeMutablePoint
     var touchInfos: [TouchInfo] = []
     
     if let touches = touches {
-        for i in 0..<Int(numTouches) {
-            let touch = touches[i]
-            let info = TouchInfo(
-                identifier: touch.identifier,
-                state: SwiftTouchState(rawValue: touch.state) ?? .notTracking,
-                normalizedX: touch.normalizedX,
-                normalizedY: touch.normalizedY,
-                velocityX: touch.velocityX,
-                velocityY: touch.velocityY,
-                timestamp: timestamp
-            )
-            touchInfos.append(info)
+    for i in 0..<Int(numTouches) {
+        let touch = touches[i]
+        let info = TouchInfo(
+            identifier: touch.identifier,
+            state: SwiftTouchState(rawValue: touch.state) ?? .notTracking,
+            normalizedX: touch.normalizedX,
+            normalizedY: touch.normalizedY,
+            velocityX: touch.velocityX,
+            velocityY: touch.velocityY,
+            timestamp: timestamp
+        )
+        touchInfos.append(info)
         }
     }
     
@@ -241,7 +241,7 @@ class TouchManager {
             lastTapTime = 0
             lastTapPosition = nil
         } else {
-            executeAction(action)
+        executeAction(action)
             lastTapTime = timestamp
             lastTapX = x
             lastTapPosition = position
