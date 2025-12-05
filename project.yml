@@ -1,0 +1,44 @@
+name: MagicTouch
+options:
+  bundleIdPrefix: com.opensource
+  deploymentTarget:
+    macOS: "12.0"
+  xcodeVersion: "15.0"
+  generateEmptyDirectories: true
+
+settings:
+  base:
+    SWIFT_VERSION: "5.9"
+    MACOSX_DEPLOYMENT_TARGET: "12.0"
+    CODE_SIGN_IDENTITY: "-"
+    CODE_SIGNING_REQUIRED: NO
+    CODE_SIGN_ENTITLEMENTS: MagicTouch/Resources/MagicTouch.entitlements
+
+targets:
+  MagicTouch:
+    type: application
+    platform: macOS
+    sources:
+      - path: MagicTouch/Sources
+        type: group
+      - path: MagicTouch/Resources
+        type: group
+    settings:
+      base:
+        INFOPLIST_FILE: MagicTouch/Resources/Info.plist
+        PRODUCT_BUNDLE_IDENTIFIER: com.opensource.MagicTouch
+        PRODUCT_NAME: MagicTouch
+        SWIFT_OBJC_BRIDGING_HEADER: MagicTouch/Sources/MagicTouch-Bridging-Header.h
+        LD_RUNPATH_SEARCH_PATHS:
+          - "@executable_path/../Frameworks"
+          - "/System/Library/PrivateFrameworks"
+        OTHER_LDFLAGS:
+          - "-framework"
+          - "Cocoa"
+          - "-framework"
+          - "CoreGraphics"
+        ENABLE_HARDENED_RUNTIME: NO
+        CODE_SIGN_INJECT_BASE_ENTITLEMENTS: NO
+    entitlements:
+      path: MagicTouch/Resources/MagicTouch.entitlements
+
