@@ -58,24 +58,29 @@ Press `Cmd + R` to build and run.
 
 Double-tap on left zone → Double-click (for text selection)
 
-## How It Works
-
-Uses Apple's private `MultitouchSupport.framework` to receive touch events. When a tap is detected, the configured action is executed via `CGEvent` API.
-
 ## Troubleshooting
 
+**"MagicTouch can't be opened because it is from an unidentified developer"**
+- Right-click on the app → Open → Open
+- Or: System Settings → Privacy & Security → scroll down → "Open Anyway"
+
 **Taps not working?**
-- Check Accessibility permissions in System Settings
-- Make sure MagicTouch is enabled (checkmark in menu)
+- Check Accessibility permissions in System Settings → Privacy & Security → Accessibility
+- Make sure MagicTouch is enabled (checkmark in menu bar)
 - Restart the app
 
 **After rebuild, need to re-add to Accessibility?**
 - Install to `/Applications` for stable path
 
-## Limitations
+## Contributing
 
-- Uses private Apple framework (may break with macOS updates)
-- Not available on Mac App Store
+1. Fork the repo
+2. Create a branch (`git checkout -b feature/cool-stuff`)
+3. Make your changes
+4. Test on both Apple Silicon and Intel if possible
+5. Commit (`git commit -m "Add cool stuff"`)
+6. Push (`git push origin feature/cool-stuff`)
+7. Open a Pull Request
 
 ## Support
 
