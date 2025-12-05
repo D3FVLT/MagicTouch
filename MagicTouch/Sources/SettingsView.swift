@@ -117,7 +117,7 @@ struct SettingsView: View {
                 .frame(width: 100, alignment: .leading)
             
             Picker("", selection: action) {
-                ForEach(TapAction.allCases, id: \.self) { tapAction in
+                ForEach(TapAction.selectableCases, id: \.self) { tapAction in
                     Text(tapAction.description).tag(tapAction)
                 }
             }
@@ -174,17 +174,6 @@ struct SettingsView: View {
                     VStack(alignment: .leading) {
                         Text("Launch at Login")
                         Text("Start MagicTouch automatically when you log in")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                    }
-                }
-                
-                Divider()
-                
-                Toggle(isOn: $settings.includeBuiltInTrackpad) {
-                    VStack(alignment: .leading) {
-                        Text("Include Built-in Trackpad")
-                        Text("Also handle touch events from MacBook trackpad")
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }

@@ -9,6 +9,10 @@ enum TapAction: String, CaseIterable, Codable {
     case doubleClick = "Double Click"
     
     var description: String { rawValue }
+    
+    static var selectableCases: [TapAction] {
+        [.none, .leftClick, .rightClick, .middleClick]
+    }
 }
 
 class Settings: ObservableObject {

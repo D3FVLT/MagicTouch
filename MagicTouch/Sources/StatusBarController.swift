@@ -79,6 +79,12 @@ class StatusBarController {
         
         menu.addItem(NSMenuItem.separator())
         
+        let resetItem = NSMenuItem(title: "Reset Touch State", action: #selector(resetTouchState(_:)), keyEquivalent: "r")
+        resetItem.target = self
+        menu.addItem(resetItem)
+        
+        menu.addItem(NSMenuItem.separator())
+        
         let checkUpdatesItem = NSMenuItem(title: "Check for Updates...", action: #selector(checkForUpdates(_:)), keyEquivalent: "")
         checkUpdatesItem.target = self
         menu.addItem(checkUpdatesItem)
@@ -103,6 +109,10 @@ class StatusBarController {
         onSettingsClicked?()
     }
     
+    @objc private func resetTouchState(_ sender: NSMenuItem) {
+        TouchManager.shared.resetState()
+    }
+    
     @objc private func checkForUpdates(_ sender: NSMenuItem) {
         UpdateChecker.shared.checkForUpdates(silent: false)
     }
@@ -113,7 +123,7 @@ class StatusBarController {
         
         let alert = NSAlert()
         alert.messageText = "MagicTouch"
-        alert.informativeText = "Version \(version) (\(build))\n\nTap-to-click for Magic Mouse.\n\n© 2024 MIT License"
+        alert.informativeText = "Version \(version) (\(build))\n\nTap-to-click for Magic Mouse.\n\n© 2025 MIT License"
         alert.alertStyle = .informational
         alert.addButton(withTitle: "OK")
         alert.addButton(withTitle: "GitHub")

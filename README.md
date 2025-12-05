@@ -33,8 +33,13 @@ The release is a Universal binary that works on both Apple Silicon and Intel Mac
 
 ### Build from Source
 
+Requires [XcodeGen](https://github.com/yonaskolb/XcodeGen) to generate the Xcode project:
+
 ```bash
+# Install XcodeGen (if not installed)
 brew install xcodegen
+
+# Clone and build
 git clone https://github.com/D3FVLT/MagicTouch.git
 cd MagicTouch
 xcodegen generate
@@ -42,6 +47,8 @@ open MagicTouch.xcodeproj
 ```
 
 Press `Cmd + R` to build and run.
+
+> **Note:** After pulling updates from GitHub, run `xcodegen generate` again if new source files were added.
 
 ## Usage
 
@@ -60,17 +67,51 @@ Double-tap on left zone → Double-click (for text selection)
 
 ## Troubleshooting
 
-**"MagicTouch can't be opened because it is from an unidentified developer"**
+### "MagicTouch can't be opened because it is from an unidentified developer"
+
 - Right-click on the app → Open → Open
 - Or: System Settings → Privacy & Security → scroll down → "Open Anyway"
 
-**Taps not working?**
-- Check Accessibility permissions in System Settings → Privacy & Security → Accessibility
-- Make sure MagicTouch is enabled (checkmark in menu bar)
-- Restart the app
+### Taps not working?
 
-**After rebuild, need to re-add to Accessibility?**
-- Install to `/Applications` for stable path
+1. Check Accessibility permissions: System Settings → Privacy & Security → Accessibility
+2. Make sure MagicTouch is enabled (checkmark in menu bar)
+3. Try **Reset Touch State** from the menu (⌘R) — fixes stuck touch detection
+4. Restart the app
+
+### Taps stopped working randomly?
+
+This can happen after unusual touch gestures. Use **Reset Touch State** (⌘R) from the menu bar to fix it without restarting.
+
+### After updating: "Open Anyway" and Accessibility permissions required again
+
+**Why this happens:** MagicTouch is not code-signed (no Apple Developer account). macOS treats each new binary as a different app, requiring re-authorization.
+
+**How to update properly:**
+
+1. **Quit MagicTouch** (menu bar → Quit)
+2. **Remove from Accessibility:**
+   - System Settings → Privacy & Security → Accessibility
+   - Select MagicTouch → click "−" button to remove
+3. **Replace the app** with the new version in `/Applications`
+4. **Launch the new version:**
+   - Right-click → Open → Open (or use "Open Anyway" in Security settings)
+5. **Re-grant Accessibility:**
+   - The permission prompt should appear automatically
+   - Or manually add in System Settings → Privacy & Security → Accessibility
+
+> **Tip:** If the app doesn't appear in Accessibility list or permissions don't work, try restarting your Mac after step 2.
+
+### After rebuild, need to re-add to Accessibility?
+
+When building from source, the app path changes. To avoid this:
+
+```bash
+# Copy built app to Applications
+cp -r ~/Library/Developer/Xcode/DerivedData/MagicTouch-*/Build/Products/Debug/MagicTouch.app /Applications/
+
+# Then grant permissions to /Applications/MagicTouch.app
+```
 
 ## Contributing
 

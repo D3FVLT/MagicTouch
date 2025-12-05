@@ -1,5 +1,6 @@
 import Foundation
 import Cocoa
+import QuartzCore
 
 enum SwiftTouchState: Int32 {
     case notTracking = 0
@@ -57,6 +58,14 @@ private struct TouchStart {
     let time: Double
     var maxMovementX: Float = 0
     var maxMovementY: Float = 0
+    var lastUpdateTime: Double
+    
+    init(x: Float, y: Float, time: Double) {
+        self.x = x
+        self.y = y
+        self.time = time
+        self.lastUpdateTime = time
+    }
 }
 
 class TouchManager {
@@ -75,16 +84,20 @@ class TouchManager {
     private let settings = Settings.shared
     private let clickGenerator = ClickGenerator.shared
     
+    private let touchQueue = DispatchQueue(label: "com.magictouch.touchmanager", qos: .userInteractive)
+    
     private let tapMaxDuration: Double = 0.25
     private let tapMaxMovement: Float = 0.05
     private let tapMaxVelocity: Float = 1.0
-    private let touchTimeout: Double = 2.0
+    private let touchTimeout: Double = 0.5
     private let doubleTapMaxInterval: Double = 0.4
     private let doubleTapMaxDistance: Float = 0.15
     
     private init() {
         globalTouchCallback = { [weak self] device, touches in
-            self?.handleTouches(touches)
+            self?.touchQueue.async {
+                self?.handleTouches(touches)
+            }
         }
     }
     
@@ -161,14 +174,17 @@ class TouchManager {
     }
     
     private func handleTouches(_ touches: [TouchInfo]) {
+        let systemTime = CACurrentMediaTime()
         let currentTime = touches.first?.timestamp ?? lastFrameTime
+        let cleanupTime = currentTime > 0 ? currentTime : systemTime
         
-        if currentTime > 0 {
-            let staleIds = touchStarts.filter { currentTime - $0.value.time > touchTimeout }.map { $0.key }
-            for id in staleIds {
-                activeTouches.removeValue(forKey: id)
-                touchStarts.removeValue(forKey: id)
-            }
+        let staleIds = touchStarts.filter { cleanupTime - $0.value.lastUpdateTime > touchTimeout }.map { $0.key }
+        for id in staleIds {
+            #if DEBUG
+            debugLog("Removing stale touch: \(id)")
+            #endif
+            activeTouches.removeValue(forKey: id)
+            touchStarts.removeValue(forKey: id)
         }
         
         for touch in touches {
@@ -186,10 +202,11 @@ class TouchManager {
                 if var start = touchStarts[touch.identifier] {
                     start.maxMovementX = max(start.maxMovementX, abs(touch.normalizedX - start.x))
                     start.maxMovementY = max(start.maxMovementY, abs(touch.normalizedY - start.y))
+                    start.lastUpdateTime = touch.timestamp
                     touchStarts[touch.identifier] = start
                 }
                 
-            case .breakTouch, .outOfRange:
+            case .breakTouch, .outOfRange, .lingerInRange, .notTracking:
                 if let start = touchStarts[touch.identifier] {
                     let duration = touch.timestamp - start.time
                     let velocity = sqrt(touch.velocityX * touch.velocityX + touch.velocityY * touch.velocityY)
@@ -199,9 +216,13 @@ class TouchManager {
                                 start.maxMovementY < tapMaxMovement &&
                                 velocity < tapMaxVelocity
                     
-                    if isTap {
-                        let otherTouches = activeTouches.filter { $0.key != touch.identifier }
-                        if otherTouches.isEmpty {
+
+                    if isTap && (touch.state == .breakTouch || touch.state == .outOfRange) {
+                        let reallyActiveTouches = activeTouches.filter { entry in
+                            entry.key != touch.identifier &&
+                            entry.value.state == .touching
+                        }
+                        if reallyActiveTouches.isEmpty {
                             let position: TouchPosition = start.x < settings.leftZoneThreshold ? .left : .right
                             handleTap(at: position, x: start.x, timestamp: touch.timestamp)
                         }
@@ -211,12 +232,17 @@ class TouchManager {
                 activeTouches.removeValue(forKey: touch.identifier)
                 touchStarts.removeValue(forKey: touch.identifier)
                 
-            default:
-                break
+            case .startInRange, .hoverInRange:
+                if touchStarts[touch.identifier] != nil {
+                    activeTouches.removeValue(forKey: touch.identifier)
+                    touchStarts.removeValue(forKey: touch.identifier)
+                }
             }
         }
         
-        lastFrameTime = currentTime
+        if currentTime > 0 {
+            lastFrameTime = currentTime
+        }
     }
     
     private func handleTap(at position: TouchPosition, x: Float, timestamp: Double) {
@@ -239,13 +265,35 @@ class TouchManager {
         if isDoubleTap && action == .leftClick {
             executeAction(.doubleClick)
             lastTapTime = 0
+            lastTapX = 0
             lastTapPosition = nil
         } else {
-        executeAction(action)
+            executeAction(action)
             lastTapTime = timestamp
             lastTapX = x
             lastTapPosition = position
         }
+    }
+    
+    func resetState() {
+        touchQueue.async { [weak self] in
+            self?.activeTouches.removeAll()
+            self?.touchStarts.removeAll()
+            self?.lastTapTime = 0
+            self?.lastTapX = 0
+            self?.lastTapPosition = nil
+            #if DEBUG
+            debugLog("TouchManager state reset")
+            #endif
+        }
+    }
+    
+    var activeTouchCount: Int {
+        var count = 0
+        touchQueue.sync {
+            count = activeTouches.count
+        }
+        return count
     }
     
     private func executeAction(_ action: TapAction) {
