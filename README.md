@@ -77,6 +77,10 @@ Uses Apple's private `MultitouchSupport.framework` to receive touch events. When
 - Uses private Apple framework (may break with macOS updates)
 - Not available on Mac App Store
 
+## Support
+
+If you find this app useful, you can [buy me a coffee ☕](https://www.donationalerts.com/r/whitenobel)
+
 ## License
 
 MIT
