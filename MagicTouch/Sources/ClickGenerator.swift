@@ -74,4 +74,5 @@ class ClickGenerator {
         mouseDown2.post(tap: .cghidEventTap)
         mouseUp2.post(tap: .cghidEventTap)
     }
+    
 }

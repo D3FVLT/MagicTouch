@@ -173,6 +173,14 @@ class TouchManager {
         isRunning = false
     }
     
+    func restart() {
+        stop()
+        devices.removeAll()
+        isRunning = false
+        resetState()
+        start()
+    }
+    
     private func handleTouches(_ touches: [TouchInfo]) {
         let systemTime = CACurrentMediaTime()
         let currentTime = touches.first?.timestamp ?? lastFrameTime
@@ -224,6 +232,9 @@ class TouchManager {
                         }
                         if reallyActiveTouches.isEmpty {
                             let position: TouchPosition = start.x < settings.leftZoneThreshold ? .left : .right
+                            #if DEBUG
+                            debugLog("Tap detected: \(position) at x=\(start.x), duration=\(String(format: "%.3f", duration))s")
+                            #endif
                             handleTap(at: position, x: start.x, timestamp: touch.timestamp)
                         }
                     }
@@ -277,11 +288,12 @@ class TouchManager {
     
     func resetState() {
         touchQueue.async { [weak self] in
-            self?.activeTouches.removeAll()
-            self?.touchStarts.removeAll()
-            self?.lastTapTime = 0
-            self?.lastTapX = 0
-            self?.lastTapPosition = nil
+            guard let self = self else { return }
+            self.activeTouches.removeAll()
+            self.touchStarts.removeAll()
+            self.lastTapTime = 0
+            self.lastTapX = 0
+            self.lastTapPosition = nil
             #if DEBUG
             debugLog("TouchManager state reset")
             #endif
@@ -298,6 +310,9 @@ class TouchManager {
     
     private func executeAction(_ action: TapAction) {
         DispatchQueue.main.async { [weak self] in
+            #if DEBUG
+            debugLog("Executing action: \(action.rawValue)")
+            #endif
             switch action {
             case .none:
                 break

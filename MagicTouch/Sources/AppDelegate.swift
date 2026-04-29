@@ -54,13 +54,47 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         
         NSApp.setActivationPolicy(.accessory)
         
+        registerSleepWakeObservers()
+        
         DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
             UpdateChecker.shared.checkForUpdates(silent: true)
         }
     }
     
     func applicationWillTerminate(_ notification: Notification) {
+        NSWorkspace.shared.notificationCenter.removeObserver(self)
         touchManager?.stop()
+    }
+    
+    private func registerSleepWakeObservers() {
+        let nc = NSWorkspace.shared.notificationCenter
+        nc.addObserver(
+            self,
+            selector: #selector(handleWillSleep(_:)),
+            name: NSWorkspace.willSleepNotification,
+            object: nil
+        )
+        nc.addObserver(
+            self,
+            selector: #selector(handleDidWake(_:)),
+            name: NSWorkspace.didWakeNotification,
+            object: nil
+        )
+    }
+    
+    @objc private func handleWillSleep(_ notification: Notification) {
+        debugLog("System will sleep — stopping touch tracking")
+        touchManager?.stop()
+    }
+    
+    @objc private func handleDidWake(_ notification: Notification) {
+        debugLog("System did wake — restarting touch tracking")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
+            guard let self = self else { return }
+            if Settings.shared.isEnabled {
+                self.touchManager?.restart()
+            }
+        }
     }
     
     private func checkAccessibilityPermissions() {
