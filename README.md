@@ -12,7 +12,7 @@ Tap-to-click for Apple Magic Mouse. Free and open-source.
 - **Two Zones** — left zone for left click, right zone for right click
 - **Double-tap** — automatically detected for text selection
 - **Adjustable Zone Boundary** — configure where left ends and right begins
-- **Sleep-Safe** — automatically reconnects to Magic Mouse after system wake
+- **Self-Healing** — periodically checks device health and automatically reconnects after sleep, Bluetooth disconnects, or late device pairing
 - **Menu Bar App** — lives in your menu bar, no dock icon
 - **Launch at Login** — start automatically
 
@@ -84,11 +84,17 @@ Double-tap on left zone → Double-click (for text selection)
 
 This can happen after unusual touch gestures. Use **Reset Touch State** (⌘R) from the menu bar to fix it without restarting.
 
-### Taps stopped working after sleep?
+### Taps stopped working after sleep / Bluetooth reconnect?
 
-MagicTouch now automatically restarts touch tracking after the system wakes
-from sleep. If for some reason this doesn't help, use **Reset Touch State**
-(⌘R) from the menu bar.
+MagicTouch periodically (every 5 seconds) verifies that the Magic Mouse is
+still tracked correctly and re-attaches automatically if:
+
+- The system woke from sleep
+- The Magic Mouse was turned off and on again
+- The mouse paired/connected after the app was already running (e.g. on Mac mini boot)
+
+If for some reason taps still don't work, use **Reset Touch State** (⌘R) or
+quit and relaunch from the menu.
 
 ### After updating: "Open Anyway" and Accessibility permissions required again
 

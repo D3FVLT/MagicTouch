@@ -76,6 +76,8 @@ class TouchManager {
     private var activeTouches: [Int32: TouchInfo] = [:]
     private var touchStarts: [Int32: TouchStart] = [:]
     private var lastFrameTime: Double = 0
+    private var healthCheckTimer: DispatchSourceTimer?
+    private let healthCheckInterval: TimeInterval = 5.0
     
     private var lastTapTime: Double = 0
     private var lastTapX: Float = 0
@@ -102,8 +104,55 @@ class TouchManager {
     }
     
     func start() {
+        touchQueue.async { [weak self] in
+            self?.startInternal()
+        }
+    }
+    
+    func stop() {
+        touchQueue.async { [weak self] in
+            self?.stopInternal()
+        }
+    }
+    
+    func restart() {
+        touchQueue.async { [weak self] in
+            guard let self = self else { return }
+            self.stopInternal()
+            self.activeTouches.removeAll()
+            self.touchStarts.removeAll()
+            self.lastTapTime = 0
+            self.lastTapX = 0
+            self.lastTapPosition = nil
+            self.startInternal()
+        }
+    }
+    
+    private func startInternal() {
         guard !isRunning else { return }
         
+        attachAvailableDevices()
+        isRunning = true
+        startHealthCheckTimer()
+        
+        #if DEBUG
+        debugLog("TouchManager started, devices=\(devices.count)")
+        #endif
+    }
+    
+    private func stopInternal() {
+        guard isRunning else { return }
+        
+        stopHealthCheckTimer()
+        detachAllDevices()
+        isRunning = false
+        
+        #if DEBUG
+        debugLog("TouchManager stopped")
+        #endif
+    }
+    
+    private func attachAvailableDevices() {
         guard let handle = dlopen("/System/Library/PrivateFrameworks/MultitouchSupport.framework/MultitouchSupport", RTLD_NOW) else {
             return
         }
@@ -144,14 +193,11 @@ class TouchManager {
                 devices.append(device)
             }
         }
-        
-        isRunning = true
     }
     
-    func stop() {
-        guard isRunning else { return }
-        
+    private func detachAllDevices() {
         guard let handle = dlopen("/System/Library/PrivateFrameworks/MultitouchSupport.framework/MultitouchSupport", RTLD_NOW) else {
+            devices.removeAll()
             return
         }
         
@@ -170,15 +216,77 @@ class TouchManager {
         }
         
         devices.removeAll()
-        isRunning = false
     }
     
-    func restart() {
-        stop()
-        devices.removeAll()
-        isRunning = false
-        resetState()
-        start()
+    private func currentSystemDeviceCount() -> Int {
+        guard let handle = dlopen("/System/Library/PrivateFrameworks/MultitouchSupport.framework/MultitouchSupport", RTLD_NOW),
+              let createListPtr = dlsym(handle, "MTDeviceCreateList") else {
+            return 0
+        }
+        typealias MTDeviceCreateListFunc = @convention(c) () -> CFArray?
+        let createList = unsafeBitCast(createListPtr, to: MTDeviceCreateListFunc.self)
+        guard let list = createList() else { return 0 }
+        
+        var matchingCount = 0
+        let total = CFArrayGetCount(list)
+        
+        if let isBuiltInPtr = dlsym(handle, "MTDeviceIsBuiltIn") {
+            typealias MTDeviceIsBuiltInFunc = @convention(c) (MTDeviceRef) -> Bool
+            let isBuiltIn = unsafeBitCast(isBuiltInPtr, to: MTDeviceIsBuiltInFunc.self)
+            for i in 0..<total {
+                guard let devicePtr = CFArrayGetValueAtIndex(list, i) else { continue }
+                let device = unsafeBitCast(devicePtr, to: MTDeviceRef.self)
+                if !isBuiltIn(device) || settings.includeBuiltInTrackpad {
+                    matchingCount += 1
+                }
+            }
+        } else {
+            matchingCount = total
+        }
+        return matchingCount
+    }
+    
+    private func anyDeviceStopped() -> Bool {
+        guard !devices.isEmpty,
+              let handle = dlopen("/System/Library/PrivateFrameworks/MultitouchSupport.framework/MultitouchSupport", RTLD_NOW),
+              let isRunningPtr = dlsym(handle, "MTDeviceIsRunning") else {
+            return false
+        }
+        typealias MTDeviceIsRunningFunc = @convention(c) (MTDeviceRef) -> Bool
+        let mtIsRunning = unsafeBitCast(isRunningPtr, to: MTDeviceIsRunningFunc.self)
+        return devices.contains { !mtIsRunning($0) }
+    }
+    
+    private func startHealthCheckTimer() {
+        stopHealthCheckTimer()
+        let timer = DispatchSource.makeTimerSource(queue: touchQueue)
+        timer.schedule(deadline: .now() + healthCheckInterval, repeating: healthCheckInterval)
+        timer.setEventHandler { [weak self] in
+            self?.healthCheck()
+        }
+        timer.resume()
+        healthCheckTimer = timer
+    }
+    
+    private func stopHealthCheckTimer() {
+        healthCheckTimer?.cancel()
+        healthCheckTimer = nil
+    }
+    
+    private func healthCheck() {
+        guard isRunning else { return }
+        
+        let systemCount = currentSystemDeviceCount()
+        let stopped = anyDeviceStopped()
+        let countMismatch = systemCount != devices.count
+        
+        if stopped || countMismatch {
+            #if DEBUG
+            debugLog("Health check: stopped=\(stopped), system=\(systemCount), tracking=\(devices.count) — restarting")
+            #endif
+            detachAllDevices()
+            attachAvailableDevices()
+        }
     }
     
     private func handleTouches(_ touches: [TouchInfo]) {
